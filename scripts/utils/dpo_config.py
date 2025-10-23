@@ -1,0 +1,81 @@
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Optional, Union, List, Literal, Dict
+from transformers import SchedulerType, IntervalStrategy
+from transformers.training_args import OptimizerNames
+from trl import DPOConfig
+
+
+class FDivergenceType(Enum):
+    REVERSE_KL = "reverse_kl"
+    JS_DIVERGENCE = "js_divergence"
+    ALPHA_DIVERGENCE = "alpha_divergence"
+
+
+@dataclass
+class TrainArgument(DPOConfig):
+
+    output_dir: str = field(default='/home/yichuan/nsfw/adversarial/llm_bypass/test', metadata={"help": "save path"})
+    num_train_epochs: int = field(default=1, metadata={"help": "train epoch"})
+    per_device_train_batch_size: int = field(default=2, metadata={"help": "batch size"})
+    gradient_checkpointing: bool = field(default=True, metadata={"help": "gradient accumulation"})
+    gradient_accumulation_steps: int = field(default=16, metadata={"help": "gradient accumulation steps"})
+    learning_rate: float = field(default=2e-4, metadata={"help": "learning rate"})
+    logging_steps: int = field(default=20, metadata={"help": "logging steps"})
+    save_steps: int = field(default=500, metadata={"help": "save steps"})
+    evaluation_strategy: Union[IntervalStrategy, str] = field(default="no", metadata={"help": "The evaluation "
+                                                                                              "strategy to use."}, )
+    save_strategy: Union[IntervalStrategy, str] = field(default="epoch", metadata={"help": "The checkpoint save "
+                                                                                           "strategy to use."}, )
+    save_total_limit: Optional[int] = field(default=2, metadata={"help": "If a value is passed, will limit the total "
+                                                                         "amount of checkpoints. Deletes the older "
+                                                                         "checkpoints in"})
+    lr_scheduler_type: Union[SchedulerType, str] = field(default="constant_with_warmup",
+                                                         metadata={"help": "The scheduler type to use."})
+    warmup_steps: int = field(default=10, metadata={"help": "Linear warmup over warmup_steps."})
+    optim: Union[OptimizerNames, str] = field(default='paged_adamw_32bit', metadata={"help": "The optimizer to use."})
+    seed: int = field(default=42, metadata={"help": "Random seed that will be set at the beginning of training."})
+    report_to: Optional[List[str]] = field(default='tensorboard', metadata={
+        "help": "The list of integrations to report the results and logs to."})
+    weight_decay: float = field(default=0.0, metadata={"help": "Weight decay for AdamW if we apply some."})
+    max_grad_norm: float = field(default=1.0, metadata={"help": "Max gradient norm."})
+    remove_unused_columns: Optional[bool] = field(default=False, metadata={
+        "help": "Remove columns not required by the model when using an nlp.Dataset."})
+    bf16: bool = field(default=True, metadata={
+        "help": ("Whether to use bf16 (mixed) precision instead of 32-bit. Requires Ampere or higher NVIDIA"
+                 " architecture or using CPU (use_cpu) or Ascend NPU. This is an experimental API and it may change."
+                 )
+    })
+    fp16: bool = field(default=False, metadata={"help": "Whether to use fp16 (mixed) precision instead of 32-bit"})
+
+    deepspeed: Optional[str] = field(default=None,
+                                     metadata={"help": "path for deep speed"})
+
+    beta: float = 0.1
+    label_smoothing: float = 0
+    loss_type: Literal[
+        "sigmoid", "hinge", "ipo", "kto_pair", "bco_pair", "sppo_hard", "nca_pair", "robust"
+    ] = "sigmoid"
+    label_pad_token_id: int = -100
+    padding_value: int = 0
+    truncation_mode: str = "keep_end"
+    max_length: Optional[int] = None
+    max_prompt_length: Optional[int] = None
+    max_target_length: Optional[int] = None
+    is_encoder_decoder: Optional[bool] = None
+    disable_dropout: bool = True
+    generate_during_eval: bool = False
+    precompute_ref_log_probs: bool = False
+    dataset_num_proc: Optional[int] = None
+    model_init_kwargs: Optional[Dict] = None
+    ref_model_init_kwargs: Optional[Dict] = None
+    model_adapter_name: Optional[str] = None
+    ref_adapter_name: Optional[str] = None
+    reference_free: bool = False
+    force_use_ref_model: bool = False
+    f_divergence_type: Optional[FDivergenceType] = FDivergenceType.REVERSE_KL
+    f_alpha_divergence_coef: Optional[float] = 1.0
+    sync_ref_model: bool = False
+    ref_model_mixup_alpha: float = 0.9
+    ref_model_sync_steps: int = 64
+    rpo_alpha: Optional[float] = None
